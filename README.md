@@ -519,3 +519,12 @@ Thanks to everyone who helped this project go further:
 - **NVIDIA users** — Thanks for helping validate CUDA path compatibility and keeping the plugin from being XPU-only.
 - **AMD users** — Thanks for your patience. ROCm support is now live in v1.0.2.
 - **Beta testers** — Thanks for investing your time in early versions: testing, filing issues, and suggesting improvements. The stability we have today wouldn't exist without you.
+
+
+---
+
+## Windows AMD (ADLX)
+
+Windows AMD GPU telemetry is supported through the Radeon driver's native ADLX interface. It reports GPU load, core clock, temperature, available power metrics, and driver-reported memory without requiring a separate Python package.
+
+See [Windows AMD ADLX telemetry](docs/windows_amd_adlx.md) for requirements, APU/UMA memory interpretation, validated configuration, and known limitations.
