@@ -143,7 +143,12 @@ def _is_amd_rocme() -> bool:
     try:
         import torch
         # torch.version.roc: True/str = AMD ROCm, None = NVIDIA/other
-        return torch.version.roc is not None
+        # Windows AMD torch builds often lack the `roc` attribute entirely,
+        # so fall back to the version string ("+rocm" / "+hip") check.
+        if hasattr(torch.version, "roc") and torch.version.roc is not None:
+            return True
+        v = getattr(torch, "__version__", "") or ""
+        return ("+rocm" in v) or ("+hip" in v)
     except Exception:
         return False
 
