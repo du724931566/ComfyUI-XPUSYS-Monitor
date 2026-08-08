@@ -38,10 +38,9 @@ def _is_admin() -> bool:
 
 class AMDProvider(BaseGPUProvider):
     """
-    Hardware provider for AMD GPUs (ROCm).
+    Hardware provider for AMD GPUs.
 
-    Uses rocm_smi (or AMD PyTorch's torch.cuda) for GPU metrics.
-    Falls back to basic torch.cuda stats if ROCm is not installed.
+    Uses AMD ADLX on Windows, rocm_smi on Linux, and torch.cuda as a fallback.
 
     Only the first GPU (index 0) is monitored.
     """
@@ -49,6 +48,8 @@ class AMDProvider(BaseGPUProvider):
     GPU_VENDOR = "amd"
 
     def __init__(self, interval_ms: int = 1000):
+        self._adlx_ok      = False
+        self._adlx         = None
         self._rocm_ok      = False
         self._torch_ok     = False
         self._psutil_ok   = False
@@ -57,8 +58,9 @@ class AMDProvider(BaseGPUProvider):
         self._cpu_model    = ""
         self._cpu_threads  = 0
 
-        self._init_rocm()
         self._check_torch()
+        self._init_adlx()
+        self._init_rocm()
         self._check_psutil()
 
         # BaseGPUProvider.__init__ starts the polling thread — call last
@@ -66,15 +68,32 @@ class AMDProvider(BaseGPUProvider):
 
         logger.info(
             f"XPUSYSMonitor: AMDProvider started "
-            f"(rocm={self._rocm_ok}, torch={self._torch_ok})"
+            f"(adlx={self._adlx_ok}, rocm={self._rocm_ok}, torch={self._torch_ok})"
         )
 
     # ------------------------------------------------------------------
     # Initialisation
     # ------------------------------------------------------------------
 
+    def _init_adlx(self) -> None:
+        """Use the Radeon driver's native Windows telemetry interface."""
+        if os.name != "nt":
+            return
+        try:
+            from .adlx import ADLXTelemetry
+            self._adlx = ADLXTelemetry(device_index=self._device_index)
+            self._adlx_ok = True
+            logger.info(
+                f"XPUSYSMonitor: AMD ADLX OK — device[0] = "
+                f"{self._adlx.device_name!r}"
+            )
+        except Exception as exc:
+            logger.warning(f"XPUSYSMonitor: AMD ADLX unavailable — {exc}")
+
     def _init_rocm(self) -> None:
         """Initialise ROCm SMI and grab the device handle for GPU 0."""
+        if self._adlx_ok:
+            return
         try:
             import rocm_smi
             rocm_smi.initializeRsmiTracking(0)
@@ -268,14 +287,43 @@ class AMDProvider(BaseGPUProvider):
     # Poll — called by BaseGPUProvider._loop() every interval
     # ------------------------------------------------------------------
 
+    def _fill_adlx_snapshot(self, snap) -> None:
+        data = self._adlx.read()
+        snap.device_name = data["device_name"]
+        snap.pci_id = data["device_id"]
+        if snap.pci_id and not snap.pci_id.lower().startswith("0x"):
+            snap.pci_id = f"0x{snap.pci_id.lower()}"
+
+        snap.vram_total_gb = data["vram_total_gb"]
+        snap.vram_driver_used_gb = data["vram_used_gb"] or 0.0
+        snap.vram_free_gb = max(
+            snap.vram_total_gb - snap.vram_driver_used_gb, 0.0
+        )
+        snap.vram_allocated_gb, snap.vram_reserved_gb = self._read_torch_stats()
+
+        snap.gpu_load_pct = data["gpu_load_pct"] or 0.0
+        snap.gpu_freq_mhz = data["gpu_freq_mhz"] or 0.0
+        snap.gpu_temp_c = (
+            data["gpu_temp_c"] if data["gpu_temp_c"] is not None else -1.0
+        )
+        snap.power_w = data["power_w"] if data["power_w"] is not None else -1.0
+        snap.power_available = data["power_w"] is not None
+        snap.tgp_w = data["tgp_w"]
+
     def _poll(self) -> None:
         """Collect all hardware metrics and push a fresh GPUSnapshot."""
         snap = GPUSnapshot(gpu_vendor=self.GPU_VENDOR)
         snap.is_admin = self._is_admin
 
-        if not self._rocm_ok and not self._torch_ok:
+        if self._adlx_ok:
+            try:
+                self._fill_adlx_snapshot(snap)
+            except Exception as exc:
+                logger.debug(f"XPUSYSMonitor: AMD ADLX poll error — {exc}")
+                snap.error = str(exc)
+        elif not self._rocm_ok and not self._torch_ok:
             # No ROCm and no torch — still collect CPU/RAM
-            snap.error = "AMD ROCm unavailable"
+            snap.error = "AMD telemetry unavailable"
         else:
             try:
                 snap.device_name = self._read_device_name()
