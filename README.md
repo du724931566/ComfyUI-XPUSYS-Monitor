@@ -75,7 +75,7 @@ Model Load: 9.80G / 8.2G  |  Status: Warning  |  Predicted Success Rate: 74%
 
 ### 🖥️ CPU — Processor
 
-<img src="screenshot/CPU_EN.png" width="400" alt="CPU Panel" />
+<img src="screenshot/AMD_Ryzen_AI_MAX_395_CPU.png" width="400" alt="AMD Ryzen AI MAX+ 395 CPU panel" />
 
 **Capsule display:**
 
@@ -103,7 +103,7 @@ CPU 23.5% @ 4.80GHz
 
 ### 💾 RAM — System Memory
 
-<img src="screenshot/RAM_EN.png" width="300" alt="RAM Panel" />
+<img src="screenshot/AMD_Ryzen_AI_MAX_395_RAM.png" width="300" alt="AMD system memory panel" />
 
 **Capsule display:**
 
@@ -132,7 +132,7 @@ RAM 61.3%
 
 First capsule in the GPU group. Monitors the GPU compute engine.
 
-<img src="screenshot/GPU_Engine_EN.png" width="400" alt="GPU Engine Panel" />
+<img src="screenshot/AMD_Radeon_8060S_GPU_Engine.png" width="400" alt="AMD Radeon 8060S GPU engine panel" />
 
 **Capsule display:**
 
@@ -154,7 +154,7 @@ GPU 87.2% @ 2450MHz | 62°C
 | Frequency | Current core clock (MHz) |
 | Temperature | Core temperature (°C); red > 85°C, yellow > 70°C |
 
-> Data source (Intel Arc): `zesEngineGetActivity` / `zesFrequencyGetState` / `zesTemperatureGetState`
+> Data source (Windows AMD): AMD ADLX GPU usage / GPU clock / temperature
 
 ---
 
@@ -162,7 +162,7 @@ GPU 87.2% @ 2450MHz | 62°C
 
 Second capsule in the GPU group. Shows driver-level VRAM usage.
 
-<img src="screenshot/GPU_VRAM_EN.png" width="600" alt="VRAM Panel" />
+<img src="screenshot/AMD_Radeon_8060S_VRAM.png" width="600" alt="AMD Radeon 8060S VRAM panel" />
 
 **Capsule display:**
 
@@ -186,7 +186,7 @@ VRAM 9.8 / 12.0 GB
 | 　Reserved Buffer | Pre-allocated PyTorch pool awaiting reuse (purple) |
 | Free | Truly available VRAM right now (GB) |
 
-> Data source: `zesMemoryGetState` / `torch.xpu.memory_allocated` / `torch.xpu.memory_reserved`
+> Data source (Windows AMD): AMD ADLX driver memory / torch.cuda.memory_allocated / torch.cuda.memory_reserved
 
 ---
 
@@ -216,7 +216,7 @@ RSV 2.1 GB
 | 　Active | Currently in-use portion (MB), cyan |
 | 　Idle Cache | Allocated but idle, waiting for reuse (MB), gray |
 
-> Data source: `torch.xpu.memory_reserved()`
+> Data source: torch.cuda.memory_reserved()
 
 ---
 
@@ -224,7 +224,7 @@ RSV 2.1 GB
 
 Fourth capsule in the GPU group. Shows instantaneous GPU power and TGP load ratio.
 
-<img src="screenshot/Power_EN.png" width="400" alt="PWR Panel" />
+<img src="screenshot/AMD_Radeon_8060S_Power.png" width="400" alt="AMD Radeon 8060S power panel" />
 
 **Capsule display:**
 
@@ -247,7 +247,7 @@ PWR 142W  75%
 | TGP Limit | Rated TDP for this GPU model (W), from built-in PCI ID table |
 | Load Ratio | Power / TGP (%); red > 95%, purple > 80% |
 
-> Data source (Intel Arc): `zesPowerGetEnergyCounter` (requires admin) · dual-sample delta method
+> Data source (Windows AMD): AMD ADLX instantaneous power (driver support dependent)
 
 ---
 
