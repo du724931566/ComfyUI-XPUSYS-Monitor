@@ -9,6 +9,7 @@
 > The project began as an Intel Arc/XPU-first monitor because ComfyUI users needed a small, native status display when general-purpose GPU tools did not expose the right data inside the workflow UI.
 >
 > This fork's AMD work came from a concrete Windows portable deployment. The original AMD path depended on ROCm SMI and could misclassify a Windows ROCm/HIP PyTorch build as NVIDIA. The fork therefore adds a native Windows ADLX path while retaining ROCm SMI for Linux and PyTorch allocator statistics everywhere.
+>
 > No matter what GPU you're running, this plugin gives you a clear, at-a-glance view of your system's vitals. Born in the XPU community, open to all platforms — we hope you enjoy it.
 
 ---
