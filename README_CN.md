@@ -9,6 +9,7 @@
 > 这个项目最初因 Intel Arc/XPU 生态缺少轻量、原生的 ComfyUI 状态监控而启动。
 >
 > 本次 AMD 工作来自一次真实的 Windows ComfyUI 便携版部署：原有 AMD 路径依赖 ROCm SMI，并可能把 Windows ROCm/HIP PyTorch 错判为 NVIDIA。因此本 fork 增加了 Windows 原生 ADLX 后端，同时保留 Linux 的 ROCm SMI 路径和所有平台的 PyTorch 分配器统计。
+>
 > 无论你手持哪种硬件，都能通过它一眼洞悉系统脉搏。这是一款诞生于 XPU 社区、并向全平台开发者开放的工具，希望你喜欢。
 
 ---
