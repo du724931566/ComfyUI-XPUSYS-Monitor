@@ -73,7 +73,7 @@
 
 ### 🖥️ CPU — 处理器
 
-<img src="screenshot/CPU_CN.png" width="400" alt="CPU 面板" />
+<img src="screenshot/AMD_Ryzen_AI_MAX_395_CPU.png" width="400" alt="AMD Ryzen AI MAX+ 395 处理器面板" />
 
 
 **胶囊显示：**
@@ -102,7 +102,7 @@ CPU 23.5% @ 4.80GHz
 
 ### 💾 RAM — 系统内存
 
-<img src="screenshot/RAM_CN.png" width="300" alt="RAM 面板" />
+<img src="screenshot/AMD_Ryzen_AI_MAX_395_RAM.png" width="300" alt="AMD 系统内存面板" />
 
 **胶囊显示：**
 
@@ -131,7 +131,7 @@ RAM 61.3%
 
 GPU 综合组的第一格，监控 GPU 计算核心的运行状态。
 
-<img src="screenshot/GPU_Engine_CN.png" width="400" alt="GPU 引擎面板" />
+<img src="screenshot/AMD_Radeon_8060S_GPU_Engine.png" width="400" alt="AMD Radeon 8060S GPU 引擎面板" />
 
 
 **胶囊显示：**
@@ -154,7 +154,7 @@ GPU 87.2% @ 2450MHz | 62°C
 | 频率 | 当前核心频率（MHz） |
 | 温度 | 核心温度（°C），> 85°C 红色，> 70°C 黄色 |
 
-> 数据来源（Intel Arc）：`zesEngineGetActivity` / `zesFrequencyGetState` / `zesTemperatureGetState`
+> 数据来源（Windows AMD）：AMD ADLX GPU 负载 / 核心频率 / 温度
 
 ---
 
@@ -162,7 +162,7 @@ GPU 87.2% @ 2450MHz | 62°C
 
 GPU 综合组的第二格，展示驱动层面的显存使用情况。
 
-<img src="screenshot/GPU_VRAM_CN.png" width="600" alt="GPU VRAM 面板" />
+<img src="screenshot/AMD_Radeon_8060S_VRAM.png" width="600" alt="AMD Radeon 8060S 显存面板" />
 
 **胶囊显示：**
 
@@ -186,7 +186,7 @@ VRAM 9.8 / 12.0 GB
 | 　预留缓冲区 | PyTorch 预先霸占的待分配空间（紫色），下次分配时优先复用 |
 | 空闲 | 当前真正可用的空闲显存（GB） |
 
-> 数据来源：`zesMemoryGetState` / `torch.xpu.memory_allocated` / `torch.xpu.memory_reserved`
+> 数据来源（Windows AMD）：AMD ADLX 驱动显存 / torch.cuda.memory_allocated / torch.cuda.memory_reserved
 
 ---
 
@@ -216,7 +216,7 @@ RSV 2.1 GB
 | 　实际占用 | 当前正在使用的部分（MB），青色 |
 | 　空闲缓存 | 已申请但暂时闲置、等待复用的部分（MB），灰色 |
 
-> 数据来源：`torch.xpu.memory_reserved()`
+> 数据来源：torch.cuda.memory_reserved()
 
 ---
 
@@ -224,7 +224,7 @@ RSV 2.1 GB
 
 GPU 综合组的第四格，展示 GPU 瞬时功耗及 TGP 负载比例。
 
-<img src="screenshot/Power_CN.png" width="400" alt="PWR 功耗面板" />
+<img src="screenshot/AMD_Radeon_8060S_Power.png" width="400" alt="AMD Radeon 8060S 功耗面板" />
 
 **胶囊显示：**
 
@@ -247,7 +247,7 @@ PWR 142W  75%
 | TGP 上限 | 该型号的规格设计功耗（W），来自内置 PCI ID 表 |
 | 负载比例 | 功耗 / TGP（%），> 95% 红色，> 80% 紫色 |
 
-> 数据来源（Intel Arc）：`zesPowerGetEnergyCounter`（需管理员）· 双采样差值法
+> 数据来源（Windows AMD）：AMD ADLX 实时功耗（取决于驱动支持）
 
 ---
 
