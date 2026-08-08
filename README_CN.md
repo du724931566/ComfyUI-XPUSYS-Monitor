@@ -6,15 +6,16 @@
 >
 > 在 ComfyUI 的生态中，Intel Arc (XPU) 用户或许是"少数派"，但这正是我们出发的理由。由于原生 XPU 监控插件的稀缺，我们立足当下，旨在为 Intel 显卡用户提供符合底层规范、稳定且极简的工具支持。
 >
-> 但我们并未止步于此——通过架构的通用化设计，这款插件已完整支持 NVIDIA (CUDA) 和 AMD (ROCm) 平台。
+> 这个项目最初因 Intel Arc/XPU 生态缺少轻量、原生的 ComfyUI 状态监控而启动。
 >
+> 本次 AMD 工作来自一次真实的 Windows ComfyUI 便携版部署：原有 AMD 路径依赖 ROCm SMI，并可能把 Windows ROCm/HIP PyTorch 错判为 NVIDIA。因此本 fork 增加了 Windows 原生 ADLX 后端，同时保留 Linux 的 ROCm SMI 路径和所有平台的 PyTorch 分配器统计。
 > 无论你手持哪种硬件，都能通过它一眼洞悉系统脉搏。这是一款诞生于 XPU 社区、并向全平台开发者开放的工具，希望你喜欢。
 
 ---
 
 ## 简介
 
-**ComfyUI-XPUSYS-Monitor** 是一款以 Intel Arc 为核心的 ComfyUI 硬件监控插件，在顶部菜单栏以胶囊形式实时展示 GPU、CPU、内存等关键指标，并提供独家的**工作流执行成功率预测**功能，让你在点击运行前就能预判本次工作流能否顺利完成。同时完整支持 NVIDIA (CUDA) 和 AMD (ROCm) 平台。
+**ComfyUI-XPUSYS-Monitor** 是一款以 Intel Arc 为核心的 ComfyUI 硬件监控插件，在顶部菜单栏以胶囊形式实时展示 GPU、CPU、内存等关键指标，并提供独家的**工作流执行成功率预测**功能，让你在点击运行前就能预判本次工作流能否顺利完成。NVIDIA (CUDA) 通过 NVML；AMD 在 Windows 使用 ADLX，在 Linux 使用 ROCm SMI，详见下文平台限制。
 
 ---
 
@@ -285,7 +286,7 @@ SPEC FP16 117T 456GB/s  (Intel Arc B580)
 
 - **Intel Arc (XPU)** — 基于 Level Zero Sysman，完整支持功耗、频率、温度监控
 - **NVIDIA (CUDA)** — 基于 pynvml，完整支持
-- **AMD (ROCm)** — 基于 `rocm_smi`，完整支持显存、负载、温度、功耗。未安装 `rocm_smi_lib` 时自动降级为 `torch.cuda` 基础统计。可选安装：`pip install rocm_smi_lib`
+- **AMD** — Windows 使用 Radeon 驱动 ADLX，Linux 使用 ROCm SMI；不同平台的可用指标不同。Windows 便携版无需安装 rocm_smi_lib。
 
 ---
 
@@ -503,6 +504,48 @@ echo [成功] 权限已提升，开始启动 ComfyUI...
 这是 **PYTHONPATH 劫持方案的预期限制**。适配器的运行时补丁层在 `torch.xpu.memory_allocated()` 无法观察到的层面拦截 CUDA API 调用。硬件层面的显存读取（Level Zero）不受影响，保持完全准确。
 
 验证方式：关闭 AIMDO-XPU，以原生 XPU 支持运行 ComfyUI，即可恢复完整的 `memory_allocated()` 追踪。
+
+---
+
+## 本次 Windows AMD 维护记录
+
+这部分维护基于本机真实运行结果，目标是准确描述不同平台的后端，而不是笼统宣称所有系统使用同一套 AMD 监控方式。
+
+### 本次修改
+
+- 修复 Windows ROCm/HIP PyTorch 在缺少 torch.version.roc 时的 AMD Provider 识别。
+- 新增不依赖额外 Python 包的 ctypes ADLX 后端，调用 AMD 驱动已安装的 amdadlx64.dll。
+- Windows AMD 现在可读取驱动级 GPU 负载、核心频率、温度、实时功耗（驱动提供时）以及显存已用/可用/总量。
+- PyTorch 的 memory_allocated / memory_reserved 与驱动级显存分开统计。
+- 新增中英双语 Windows AMD ADLX 说明文档：docs/windows_amd_adlx.md。
+- ComfyUI Manager 显示修复属于本机启动脚本参数 --enable-manager，不属于这个插件仓库，避免把 ComfyUI 本体配置混进插件。
+
+### 使用环境
+
+- Windows x64 AMD ComfyUI portable
+- Python 3.12.10
+- PyTorch 2.9.1+rocm7.2.1
+- ComfyUI Manager 4.2.2
+- AMD ADLX 1.5.0.124
+- 普通用户权限运行，无需管理员权限即可读取 AMD 指标
+
+### 本机硬件条件
+
+- AMD Ryzen AI MAX+ 395
+- AMD Radeon(TM) 8060S Graphics，PCI 设备 ID 0x1586
+- 32 个逻辑 CPU 线程
+- 63.65 GiB 系统内存
+- 集成式 Radeon APU，使用 UMA/共享内存
+
+### 实机验证结果
+
+插件接口返回 gpu_vendor 为 amd、error 为 null。一次代表性读数为：GPU 负载 13%，核心频率 1377 MHz，温度 49 C，功耗 52 W，驱动报告的 GPU 内存预算已用 24.14 GiB / 总计 64 GiB。
+
+这里的 64 GiB 是 APU/UMA 共享内存预算，不是 64 GiB 独立显存；读数会随驱动状态和工作负载变化。目前 Provider 监控 GPU 索引 0。
+
+### 真实支持范围
+
+Windows AMD 的 ADLX 支持已在上述硬件和驱动组合上验证。可用功耗上限字段取决于 Radeon 驱动、固件和具体 GPU 型号；驱动不支持的字段会显示为不可用，不会用瞬时功耗冒充上限。
 
 ---
 
